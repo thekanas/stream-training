@@ -9,73 +9,111 @@ import by.clevertec.model.Person;
 import by.clevertec.model.Student;
 import by.clevertec.util.Util;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 public class Main {
 
     public static void main(String[] args) {
-        task1();
-        task2();
-        task3();
-        task4();
+//        task1();
+//        task2();
+//        task3();
+//        task4();
         task5();
-        task6();
+//        task6();
         task7();
-        task8();
-        task9();
-        task10();
-        task11();
-        task12();
-        task13();
-        task14();
-        task15();
-        task16();
-        task17();
-        task18();
-        task19();
-        task20();
-        task21();
-        task22();
+//        task8();
+//        task9();
+//        task10();
+//        task11();
+//        task12();
+//        task13();
+//        task14();
+//        task15();
+//        task16();
+//        task17();
+//        task18();
+//        task19();
+//        task20();
+//        task21();
+//        task22();
     }
 
     public static void task1() {
         List<Animal> animals = Util.getAnimals();
-//        animals.stream() Продолжить ...
+        animals.stream()
+                .filter(a -> a.getAge() >= 10 && a.getAge() < 20)
+                .sorted(Comparator.comparingInt(Animal::getAge))
+                .skip(2 * 7)
+                .limit(7)
+                .forEach(System.out::println);
     }
 
     public static void task2() {
         List<Animal> animals = Util.getAnimals();
-//        animals.stream() Продолжить ...
+        animals.stream()
+                .filter(a -> a.getOrigin().equals("Japanese"))
+                .peek(a ->
+                {
+                    if (a.getGender().equals("Female")) {
+                        a.setBread(a.getBread().toUpperCase());
+                    }
+                })
+                .map(Animal::getBread)
+                .forEach(System.out::println);
     }
 
     public static void task3() {
         List<Animal> animals = Util.getAnimals();
-//        animals.stream() Продолжить ...
+        animals.stream()
+                .filter(a -> a.getAge() > 30)
+                .map(Animal::getOrigin)
+                .distinct()
+                .filter(o -> o.startsWith("A"))
+                .forEach(System.out::println);
+
     }
 
     public static void task4() {
         List<Animal> animals = Util.getAnimals();
-//        animals.stream() Продолжить ...
+        Long n = animals.stream()
+                .filter(a -> a.getGender().equals("Female"))
+                .count();
+        System.out.println(n);
     }
 
     public static void task5() {
         List<Animal> animals = Util.getAnimals();
-//        animals.stream() Продолжить ...
+        boolean thereIsAnAnimalFromHungarian =  animals.stream()
+                .filter(a -> a.getAge() >= 20 && a.getAge() <= 30)
+                .anyMatch(a -> a.getOrigin().equals("Hungarian"));
+        System.out.println("Есть ли животные из Венгрии возрастом 20 - 30 лет: " + thereIsAnAnimalFromHungarian);
     }
 
     public static void task6() {
         List<Animal> animals = Util.getAnimals();
-//        animals.stream() Продолжить ...
+        animals.stream()
+                .filter(a -> !a.getGender().equals("Male") && !a.getGender().equals("Female"))
+                .forEach(System.out::println);
     }
 
     public static void task7() {
         List<Animal> animals = Util.getAnimals();
-//        animals.stream() Продолжить ...
+        boolean thereIsAnAnimalFromOceania = animals.stream()
+                .anyMatch(a -> a.getOrigin().equals("Oceania"));
+        System.out.println("Есть ли животные из Oceania: " + thereIsAnAnimalFromOceania);
     }
 
     public static void task8() {
         List<Animal> animals = Util.getAnimals();
-//        animals.stream() Продолжить ...
+        int age = animals.stream()
+                .sorted(Comparator.comparing(Animal::getBread))
+                .limit(100)
+                .map(Animal::getAge)
+                .max(Integer::compare)
+                .get();
+        System.out.println(age);
     }
 
     public static void task9() {
