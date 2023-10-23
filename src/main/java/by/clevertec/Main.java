@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
@@ -24,6 +25,11 @@ import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.averagingDouble;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.minBy;
 
 public class Main {
 
@@ -47,18 +53,20 @@ public class Main {
 //        task17();
 //        task18();
 //        task19();
-        task20();
+//        task20();
 //        task21();
 //        task22();
     }
 
     public static void task1() {
+        int countAnimal = 7;
+        int skipZoo = 2;
         List<Animal> animals = Util.getAnimals();
         animals.stream()
                 .filter(a -> a.getAge() >= 10 && a.getAge() < 20)
                 .sorted(Comparator.comparingInt(Animal::getAge))
-                .skip(2 * 7)
-                .limit(7)
+                .skip(skipZoo * countAnimal)
+                .limit(countAnimal)
                 .forEach(System.out::println);
     }
 
@@ -66,11 +74,12 @@ public class Main {
         List<Animal> animals = Util.getAnimals();
         animals.stream()
                 .filter(a -> a.getOrigin().equals("Japanese"))
-                .peek(a ->
+                .map(a ->
                 {
                     if (a.getGender().equals("Female")) {
                         a.setBread(a.getBread().toUpperCase());
                     }
+                    return a;
                 })
                 .map(Animal::getBread)
                 .forEach(System.out::println);
@@ -183,6 +192,8 @@ public class Main {
 
     public static void task15() {
         List<Flower> flowers = Util.getFlowers();
+        int year = 5;
+        double costCubicMeterWater = 1.39;
         double total = flowers.stream()
                 .sorted(Comparator.comparing(Flower::getOrigin).reversed()
                         .thenComparing(
@@ -192,10 +203,10 @@ public class Main {
                 .filter(f -> f.getCommonName().matches("[C-S].*"))
                 .filter(Flower::isShadePreferred)
                 .filter(f -> f.getFlowerVaseMaterial().contains("Glass") || f.getFlowerVaseMaterial().contains("Steel") || f.getFlowerVaseMaterial().contains("Aluminum"))
-                .mapToDouble(f -> f.getPrice() + f.getWaterConsumptionPerDay() * 365 * 5 * 1.39 * 0.001)
+                .mapToDouble(f -> f.getPrice() + f.getWaterConsumptionPerDay() * 365 * year * costCubicMeterWater * 0.001)
                 .sum();
 
-        System.out.println("Общая стоимость и расходы на обслуживание за 5 лет выбранных растений составят: " + total);
+        System.out.println("Общая стоимость и расходы на обслуживание за " + year + "лет выбранных растений составят: " + total);
     }
 
     public static void task16() {
@@ -218,20 +229,9 @@ public class Main {
     public static void task18() {
         List<Student> students = Util.getStudents();
         students.stream()
-                .collect(Collectors.toMap(
-                        s -> s.getFaculty(),
-                        s -> new int[]{s.getAge(), 1},
-                        (int[] a, int[] b) -> {
-                            a[0] = a[0] + b[0];
-                            a[1] = a[1] + b[1];
-                            return a;
-                        }
-                ))
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(
-                        s -> s.getKey(),
-                        s -> Arrays.stream(s.getValue()).asDoubleStream().reduce((a, b) -> a / b).orElse(0)
+                .collect(groupingBy(
+                        Student::getFaculty,
+                        averagingDouble(Student::getAge)
                 ))
                 .entrySet()
                 .stream()
@@ -242,13 +242,38 @@ public class Main {
     public static void task19() {
         List<Student> students = Util.getStudents();
         List<Examination> examinations = Util.getExaminations();
-//        students.stream() Продолжить ...
+        String group = "M-1";
+
+        students.stream()
+                .filter(s -> examinations.stream()
+                                .filter(e -> e.getStudentId() == s.getId())
+                                .anyMatch(e -> e.getExam3() > 4)
+                                )
+                .filter(s -> s.getGroup().equals(group))
+                .forEach(System.out::println);
     }
 
     public static void task20() {
         List<Student> students = Util.getStudents();
         List<Examination> examinations = Util.getExaminations();
-//        students.stream()
+        Map.Entry<String, Double> facultyWithHighestAverageGradeOnFirstExam = students.stream()
+                .map(s -> new Object[]{s.getFaculty(), examinations.stream()
+                        .filter(e -> e.getStudentId() == s.getId())
+                        .map(Examination::getExam1)
+                        .findFirst()
+                        .orElse(-1)})
+                .filter(a -> (int) a[1] > 0)
+                .collect(groupingBy(
+                        a -> (String) a[0],
+                        averagingDouble(a -> (int) a[1])
+                ))
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue()).orElseThrow();
+
+        System.out.println("Факультет " +  facultyWithHighestAverageGradeOnFirstExam.getKey() +
+                " имеет максимальную среднюю оценку по первому экзамену, которая составляет: "
+                + facultyWithHighestAverageGradeOnFirstExam.getValue());
     }
 
     public static void task21() {
@@ -266,13 +291,9 @@ public class Main {
     public static void task22() {
         List<Student> students = Util.getStudents();
         students.stream()
-                .collect(Collectors.toMap(
-                        Student::getFaculty,
-                        Student::getAge,
-                        (a, b) -> {
-                            if(a < b) return a;
-                            else return b;
-                        }
+                .collect(groupingBy(Student::getFaculty,
+                                    collectingAndThen(minBy(Comparator.comparingInt(Student::getAge)),
+                                            s -> s.orElseThrow().getAge())
                 ))
                 .entrySet()
                 .forEach(System.out::println);
