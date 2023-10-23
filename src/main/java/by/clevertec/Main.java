@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,7 @@ public class Main {
 //        task10();
 //        task11();
 //        task12();
-//        task13();
+        task13();
 //        task14();
 //        task15();
 //        task16();
@@ -180,7 +181,28 @@ public class Main {
         List<House> houses = Util.getHouses();
 
         houses.stream()
-                .flatMap(h -> h.getPersonList().stream())
+                .flatMap(hh -> Stream.of(
+                                        houses.stream()
+                                                .filter(h -> h.getBuildingType().equals("Hospital"))
+                                                .map(House::getPersonList)
+                                                .flatMap(Collection::stream),
+
+                                        houses.stream()
+                                                .filter(h -> h.getBuildingType().equals("Civil building"))
+                                                .map(House::getPersonList)
+                                                .flatMap(Collection::stream)
+                                                .filter(p -> p.getDateOfBirth().isAfter(LocalDate.now().minus(18, ChronoUnit.YEARS)) ||
+                                                        p.getDateOfBirth().isBefore(LocalDate.now().minus(60, ChronoUnit.YEARS))),
+
+                                        houses.stream()
+                                                .map(House::getPersonList)
+                                                .flatMap(Collection::stream)
+
+                                )
+                                .flatMap(stream -> stream)
+                )
+                .distinct()
+                .limit(500)
                 .forEach(System.out::println);
 
     }
@@ -246,9 +268,9 @@ public class Main {
 
         students.stream()
                 .filter(s -> examinations.stream()
-                                .filter(e -> e.getStudentId() == s.getId())
-                                .anyMatch(e -> e.getExam3() > 4)
-                                )
+                        .filter(e -> e.getStudentId() == s.getId())
+                        .anyMatch(e -> e.getExam3() > 4)
+                )
                 .filter(s -> s.getGroup().equals(group))
                 .forEach(System.out::println);
     }
@@ -271,7 +293,7 @@ public class Main {
                 .stream()
                 .max(Map.Entry.comparingByValue()).orElseThrow();
 
-        System.out.println("Факультет " +  facultyWithHighestAverageGradeOnFirstExam.getKey() +
+        System.out.println("Факультет " + facultyWithHighestAverageGradeOnFirstExam.getKey() +
                 " имеет максимальную среднюю оценку по первому экзамену, которая составляет: "
                 + facultyWithHighestAverageGradeOnFirstExam.getValue());
     }
@@ -292,8 +314,8 @@ public class Main {
         List<Student> students = Util.getStudents();
         students.stream()
                 .collect(groupingBy(Student::getFaculty,
-                                    collectingAndThen(minBy(Comparator.comparingInt(Student::getAge)),
-                                            s -> s.orElseThrow().getAge())
+                        collectingAndThen(minBy(Comparator.comparingInt(Student::getAge)),
+                                s -> s.orElseThrow().getAge())
                 ))
                 .entrySet()
                 .forEach(System.out::println);
