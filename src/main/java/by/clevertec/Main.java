@@ -47,9 +47,9 @@ public class Main {
 //        task10();
 //        task11();
 //        task12();
-        task13();
+//        task13();
 //        task14();
-//        task15();
+        task15();
 //        task16();
 //        task17();
 //        task18();
@@ -64,7 +64,7 @@ public class Main {
         int skipZoo = 2;
         List<Animal> animals = Util.getAnimals();
         animals.stream()
-                .filter(a -> a.getAge() >= 10 && a.getAge() < 20)
+                .filter(animal -> animal.getAge() >= 10 && animal.getAge() < 20)
                 .sorted(Comparator.comparingInt(Animal::getAge))
                 .skip(skipZoo * countAnimal)
                 .limit(countAnimal)
@@ -74,56 +74,51 @@ public class Main {
     public static void task2() {
         List<Animal> animals = Util.getAnimals();
         animals.stream()
-                .filter(a -> a.getOrigin().equals("Japanese"))
-                .map(a ->
-                {
-                    if (a.getGender().equals("Female")) {
-                        a.setBread(a.getBread().toUpperCase());
-                    }
-                    return a;
-                })
+                .filter(animal -> animal.getOrigin().equals("Japanese"))
+                .filter(animal -> animal.getGender().equals("Female"))
                 .map(Animal::getBread)
+                .map(String::toUpperCase)
                 .forEach(System.out::println);
     }
 
     public static void task3() {
         List<Animal> animals = Util.getAnimals();
         animals.stream()
-                .filter(a -> a.getAge() > 30)
+                .filter(animal -> animal.getAge() > 30)
                 .map(Animal::getOrigin)
                 .distinct()
-                .filter(o -> o.startsWith("A"))
+                .filter(origin -> origin.startsWith("A"))
                 .forEach(System.out::println);
 
     }
 
     public static void task4() {
         List<Animal> animals = Util.getAnimals();
-        Long n = animals.stream()
-                .filter(a -> a.getGender().equals("Female"))
+        long n = animals.stream()
+                .filter(animal -> animal.getGender().equals("Female"))
                 .count();
-        System.out.println(n);
+        System.out.println("Колличество животных пола Female: " + n);
     }
 
     public static void task5() {
         List<Animal> animals = Util.getAnimals();
         boolean thereIsAnAnimalFromHungarian = animals.stream()
-                .filter(a -> a.getAge() >= 20 && a.getAge() <= 30)
-                .anyMatch(a -> a.getOrigin().equals("Hungarian"));
+                .filter(animal -> animal.getAge() >= 20 && animal.getAge() <= 30)
+                .anyMatch(animal -> animal.getOrigin().equals("Hungarian"));
         System.out.println("Есть ли животные из Венгрии возрастом 20 - 30 лет: " + thereIsAnAnimalFromHungarian);
     }
 
     public static void task6() {
         List<Animal> animals = Util.getAnimals();
         animals.stream()
-                .filter(a -> !a.getGender().equals("Male") && !a.getGender().equals("Female"))
+                .filter(animal -> !animal.getGender().equals("Male") && !animal.getGender().equals("Female"))
                 .forEach(System.out::println);
     }
 
     public static void task7() {
         List<Animal> animals = Util.getAnimals();
         boolean thereIsAnAnimalFromOceania = animals.stream()
-                .anyMatch(a -> a.getOrigin().equals("Oceania"));
+                .anyMatch(animal -> animal.getOrigin().equals("Oceania"));
         System.out.println("Есть ли животные из Oceania: " + thereIsAnAnimalFromOceania);
     }
 
@@ -135,7 +130,7 @@ public class Main {
                 .mapToInt(Animal::getAge)
                 .max()
                 .orElseThrow();
-        System.out.println(age);
+        System.out.println("Возвраст самого старого животного из выбранных: " + age);
     }
 
     public static void task9() {
@@ -159,7 +154,7 @@ public class Main {
     public static void task11() {
         List<Animal> animals = Util.getAnimals();
         double avg = animals.stream()
-                .filter(a -> "Indonesian".equals(a.getOrigin()))
+                .filter(animal -> "Indonesian".equals(animal.getOrigin()))
                 .mapToInt(Animal::getAge)
                 .average()
                 .orElseThrow();
@@ -169,9 +164,9 @@ public class Main {
     public static void task12() {
         List<Person> persons = Util.getPersons();
         persons.stream()
-                .filter(g -> "Male".equals(g.getGender()))
-                .filter(a -> LocalDate.now().isAfter(a.getDateOfBirth().plus(18, ChronoUnit.YEARS)) &&
-                        LocalDate.now().isBefore(a.getDateOfBirth().plus(27, ChronoUnit.YEARS)))
+                .filter(person -> "Male".equals(person.getGender()))
+                .filter(person -> LocalDate.now().isAfter(person.getDateOfBirth().plus(18, ChronoUnit.YEARS)) &&
+                        LocalDate.now().isBefore(person.getDateOfBirth().plus(27, ChronoUnit.YEARS)))
                 .sorted(Comparator.comparing(Person::getRecruitmentGroup))
                 .limit(200)
                 .forEach(System.out::println);
@@ -183,12 +178,12 @@ public class Main {
         houses.stream()
                 .flatMap(hh -> Stream.of(
                                         houses.stream()
-                                                .filter(h -> h.getBuildingType().equals("Hospital"))
+                                                .filter(house -> house.getBuildingType().equals("Hospital"))
                                                 .map(House::getPersonList)
                                                 .flatMap(Collection::stream),
 
                                         houses.stream()
-                                                .filter(h -> h.getBuildingType().equals("Civil building"))
+                                                .filter(house -> house.getBuildingType().equals("Civil building"))
                                                 .map(House::getPersonList)
                                                 .flatMap(Collection::stream)
                                                 .filter(p -> p.getDateOfBirth().isAfter(LocalDate.now().minus(18, ChronoUnit.YEARS)) ||
@@ -214,18 +209,20 @@ public class Main {
 
     public static void task15() {
         List<Flower> flowers = Util.getFlowers();
+
         int year = 5;
         double costCubicMeterWater = 1.39;
+        Comparator<Flower> compareByOriginReversed = Comparator.comparing(Flower::getOrigin).reversed();
+        Comparator<Flower> compareByPrice = Comparator.comparing(Flower::getPrice);
+        Comparator<Flower> compareByWaterConsumptionPerDayReversed = Comparator.comparing(Flower::getWaterConsumptionPerDay).reversed();
+        List<String> materials = new ArrayList<>(){{add("Glass"); add("Steel"); add("Aluminum");}};
+
         double total = flowers.stream()
-                .sorted(Comparator.comparing(Flower::getOrigin).reversed()
-                        .thenComparing(
-                                Comparator.comparing(Flower::getPrice)
-                                        .thenComparing(
-                                                Comparator.comparing(Flower::getWaterConsumptionPerDay).reversed())))
-                .filter(f -> f.getCommonName().matches("[C-S].*"))
+                .sorted(compareByOriginReversed.thenComparing(compareByPrice.thenComparing(compareByWaterConsumptionPerDayReversed)))
+                .filter(flower -> flower.getCommonName().matches("[C-S].*"))
                 .filter(Flower::isShadePreferred)
-                .filter(f -> f.getFlowerVaseMaterial().contains("Glass") || f.getFlowerVaseMaterial().contains("Steel") || f.getFlowerVaseMaterial().contains("Aluminum"))
-                .mapToDouble(f -> f.getPrice() + f.getWaterConsumptionPerDay() * 365 * year * costCubicMeterWater * 0.001)
+                .filter(flower ->  materials.stream().anyMatch(material -> flower.getFlowerVaseMaterial().contains(material)))
+                .mapToDouble(flower -> flower.getPrice() + flower.getWaterConsumptionPerDay() * 365 * year * costCubicMeterWater * 0.001)
                 .sum();
 
         System.out.println("Общая стоимость и расходы на обслуживание за " + year + "лет выбранных растений составят: " + total);
@@ -234,10 +231,9 @@ public class Main {
     public static void task16() {
         List<Student> students = Util.getStudents();
         students.stream()
-                .filter(s -> s.getAge() < 18)
+                .filter(student -> student.getAge() < 18)
                 .sorted(Comparator.comparing(Student::getSurname))
                 .forEach(System.out::println);
-
     }
 
     public static void task17() {
@@ -267,11 +263,11 @@ public class Main {
         String group = "M-1";
 
         students.stream()
-                .filter(s -> examinations.stream()
-                        .filter(e -> e.getStudentId() == s.getId())
-                        .anyMatch(e -> e.getExam3() > 4)
+                .filter(student -> student.getGroup().equals(group))
+                .filter(student -> examinations.stream()
+                        .filter(examination -> examination.getStudentId() == student.getId())
+                        .anyMatch(examination -> examination.getExam3() > 4)
                 )
-                .filter(s -> s.getGroup().equals(group))
                 .forEach(System.out::println);
     }
 
@@ -279,15 +275,16 @@ public class Main {
         List<Student> students = Util.getStudents();
         List<Examination> examinations = Util.getExaminations();
         Map.Entry<String, Double> facultyWithHighestAverageGradeOnFirstExam = students.stream()
-                .map(s -> new Object[]{s.getFaculty(), examinations.stream()
-                        .filter(e -> e.getStudentId() == s.getId())
-                        .map(Examination::getExam1)
-                        .findFirst()
-                        .orElse(-1)})
-                .filter(a -> (int) a[1] > 0)
+                .map(student -> new Object[]{student.getFaculty(), examinations.stream()
+                                                                    .filter(examination -> examination.getStudentId() == student.getId())
+                                                                    .map(Examination::getExam1)
+                                                                    .findFirst()
+                                                                    .orElse(-1)
+                                            })
+                .filter(array -> (int) array[1] > 0)
                 .collect(groupingBy(
-                        a -> (String) a[0],
-                        averagingDouble(a -> (int) a[1])
+                        array -> (String) array[0],
+                        averagingDouble(array -> (int) array[1])
                 ))
                 .entrySet()
                 .stream()
@@ -315,7 +312,7 @@ public class Main {
         students.stream()
                 .collect(groupingBy(Student::getFaculty,
                         collectingAndThen(minBy(Comparator.comparingInt(Student::getAge)),
-                                s -> s.orElseThrow().getAge())
+                                student -> student.orElseThrow().getAge())
                 ))
                 .entrySet()
                 .forEach(System.out::println);
