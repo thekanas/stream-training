@@ -11,20 +11,17 @@ import by.clevertec.util.Util;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
-import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.averagingDouble;
@@ -48,8 +45,8 @@ public class Main {
 //        task11();
 //        task12();
 //        task13();
-//        task14();
-        task15();
+        task14();
+//        task15();
 //        task16();
 //        task17();
 //        task18();
@@ -204,7 +201,84 @@ public class Main {
 
     public static void task14() {
         List<Car> cars = Util.getCars();
-//        cars.stream() Продолжить ...
+        Predicate<Car> whiteOrJaguar = car -> car.getCarMake().equals("Jaguar") || car.getColor().equals("White");
+        Predicate<Car> massAndBmwLexusToyotaChrysler = car -> List.of("BMW", "Lexus", "Toyota", "Chrysler").contains(car.getCarMake()) && car.getMass() < 1500;
+        Predicate<Car> blackAndMassOrGmcDodge = car -> car.getMass() > 4000 && car.getColor().equals("Black") || List.of("GMC", "Dodge").contains(car.getCarMake());
+        Predicate<Car> releaseYearOrCivicCherokee = car -> car.getReleaseYear() < 1982 || List.of("Civic", "Cherokee").contains(car.getCarModel());
+        Predicate<Car> priceOrColor = car -> car.getPrice() > 40000 || !List.of("Yellow", "Red", "Green", "Blue").contains(car.getColor());
+        Predicate<Car> vinCode = car -> car.getVin().matches(".*59.*");
+
+        Map<Integer, String> eshelons = new HashMap<>() {{
+            put(1, "Туркменистан");
+            put(2, "Узбекистан");
+            put(3, "Казахстан");
+            put(4, "Кыргызстан");
+            put(5, "Россия");
+            put(6, "Монголия");
+        }};
+
+
+        AtomicInteger iterator = new AtomicInteger(1);
+        AtomicReference<Double> totalRevenueOfLogisticsCompany = new AtomicReference<>(0.0);
+
+        Consumer<Map.Entry<Boolean, List<Car>>> entryConsumer = s -> {
+            if (s.getKey()) {
+                double totalPerCountry = s.getValue().stream().mapToInt(Car::getMass).sum() * 7.14 / 1000;
+                System.out.printf("%s эшелон(%s). Суммарная стоимость транспортных расходов: %.2f$ \n", iterator, eshelons.get(iterator.get()), totalPerCountry);
+                iterator.getAndIncrement();
+                totalRevenueOfLogisticsCompany.updateAndGet(v -> (v + totalPerCountry));
+            }
+        };
+
+
+        long count = cars.stream()
+                .collect(Collectors.partitioningBy(whiteOrJaguar))
+                .entrySet()
+                .stream()
+                .peek(entryConsumer)
+
+                .filter(c -> !c.getKey())
+                .flatMap(c -> c.getValue().stream())
+                .collect(Collectors.partitioningBy(massAndBmwLexusToyotaChrysler))
+                .entrySet()
+                .stream()
+                .peek(entryConsumer)
+
+                .filter(c -> !c.getKey())
+                .flatMap(c -> c.getValue().stream())
+                .collect(Collectors.partitioningBy(blackAndMassOrGmcDodge))
+                .entrySet()
+                .stream()
+                .peek(entryConsumer)
+
+                .filter(c -> !c.getKey())
+                .flatMap(c -> c.getValue().stream())
+                .collect(Collectors.partitioningBy(releaseYearOrCivicCherokee))
+                .entrySet()
+                .stream()
+                .peek(entryConsumer)
+
+
+                .filter(c -> !c.getKey())
+                .flatMap(c -> c.getValue().stream())
+                .collect(Collectors.partitioningBy(priceOrColor))
+                .entrySet()
+                .stream()
+                .peek(entryConsumer)
+
+                .filter(c -> !c.getKey())
+                .flatMap(c -> c.getValue().stream())
+                .collect(Collectors.partitioningBy(vinCode))
+                .entrySet()
+                .stream()
+                .peek(entryConsumer)
+
+                .filter(c -> !c.getKey())
+                .mapToLong(c -> c.getValue().size())
+                .sum();
+
+        System.out.println(count + " авто не попали ни в один из эшелонов");
+        System.out.printf("Суммарная выручка логистической компании %.2f$", totalRevenueOfLogisticsCompany.get());
     }
 
     public static void task15() {
@@ -215,17 +289,17 @@ public class Main {
         Comparator<Flower> compareByOriginReversed = Comparator.comparing(Flower::getOrigin).reversed();
         Comparator<Flower> compareByPrice = Comparator.comparing(Flower::getPrice);
         Comparator<Flower> compareByWaterConsumptionPerDayReversed = Comparator.comparing(Flower::getWaterConsumptionPerDay).reversed();
-        List<String> materials = new ArrayList<>(){{add("Glass"); add("Steel"); add("Aluminum");}};
+        List<String> materials = List.of("Glass", "Steel", "Aluminum");
 
         double total = flowers.stream()
                 .sorted(compareByOriginReversed.thenComparing(compareByPrice.thenComparing(compareByWaterConsumptionPerDayReversed)))
                 .filter(flower -> flower.getCommonName().matches("[C-S].*"))
                 .filter(Flower::isShadePreferred)
-                .filter(flower ->  materials.stream().anyMatch(material -> flower.getFlowerVaseMaterial().contains(material)))
+                .filter(flower -> materials.stream().anyMatch(material -> flower.getFlowerVaseMaterial().contains(material)))
                 .mapToDouble(flower -> flower.getPrice() + flower.getWaterConsumptionPerDay() * 365 * year * costCubicMeterWater * 0.001)
                 .sum();
 
-        System.out.println("Общая стоимость и расходы на обслуживание за " + year + "лет выбранных растений составят: " + total);
+        System.out.printf("Общая стоимость и расходы на обслуживание за %s лет выбранных растений составят: %.2f", year, total);
     }
 
     public static void task16() {
@@ -276,11 +350,11 @@ public class Main {
         List<Examination> examinations = Util.getExaminations();
         Map.Entry<String, Double> facultyWithHighestAverageGradeOnFirstExam = students.stream()
                 .map(student -> new Object[]{student.getFaculty(), examinations.stream()
-                                                                    .filter(examination -> examination.getStudentId() == student.getId())
-                                                                    .map(Examination::getExam1)
-                                                                    .findFirst()
-                                                                    .orElse(-1)
-                                            })
+                        .filter(examination -> examination.getStudentId() == student.getId())
+                        .map(Examination::getExam1)
+                        .findFirst()
+                        .orElse(-1)
+                })
                 .filter(array -> (int) array[1] > 0)
                 .collect(groupingBy(
                         array -> (String) array[0],
